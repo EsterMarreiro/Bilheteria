@@ -46,3 +46,8 @@ export interface ConfigBilheteria {
   pagar: Pagamento;
   limitePagamentoMs: number;
 }
+
+export interface Bilheteria {
+  listarEventos(): EventoInfo[];
+  reservar(pedido: unknown): Promise<Comprovante>;
+}
