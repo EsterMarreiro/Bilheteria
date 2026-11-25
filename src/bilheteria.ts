@@ -1,6 +1,7 @@
 import {
   DadosInvalidosErro,
   NaoEncontradoErro,
+  PagamentoErro,
 } from "./dominio.ts";
 import { calcularTotal, montarIngressos } from "./preco.ts";
 import { direitoAMeia } from "./regras.ts";
@@ -63,7 +64,12 @@ export function criarBilheteria({ eventos, pagar }: ConfigBilheteria): Bilheteri
       // A reserva é síncrona: outro pedido já encontra as poltronas ocupadas.
       evento.reservar(poltronas);
 
-      await pagar(total);
+      try {
+        await pagar(total);
+      } catch {
+        evento.liberar(poltronas);
+        throw new PagamentoErro("Não foi possível concluir o pagamento");
+      }
 
       return {
         reservaId: ++ultimaReservaId,
