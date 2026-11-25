@@ -42,7 +42,7 @@ function validarPedido(pedido: unknown): asserts pedido is Pedido {
   }
 }
 
-export function criarBilheteria({ eventos, pagar }: ConfigBilheteria): Bilheteria {
+export function criarBilheteria({ eventos, pagar, limitePagamentoMs }: ConfigBilheteria): Bilheteria {
   let ultimaReservaId = 0;
 
   return {
@@ -64,11 +64,23 @@ export function criarBilheteria({ eventos, pagar }: ConfigBilheteria): Bilheteri
       // A reserva é síncrona: outro pedido já encontra as poltronas ocupadas.
       evento.reservar(poltronas);
 
+      let temporizador: ReturnType<typeof setTimeout> | undefined;
       try {
-        await pagar(total);
-      } catch {
+        const limite = new Promise<never>((_, rejeitar) => {
+          temporizador = setTimeout(
+            () => rejeitar(new PagamentoErro("Tempo limite de pagamento excedido")),
+            limitePagamentoMs,
+          );
+        });
+        await Promise.race([pagar(total), limite]);
+      } catch (erro) {
         evento.liberar(poltronas);
+        if (erro instanceof PagamentoErro) {
+          throw erro;
+        }
         throw new PagamentoErro("Não foi possível concluir o pagamento");
+      } finally {
+        clearTimeout(temporizador);
       }
 
       return {
