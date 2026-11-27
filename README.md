@@ -23,6 +23,39 @@ O servidor atende em `http://localhost:3000`. Os eventos e as reservas ficam em 
 
 A operadora simulada tem latência de 80 ms e probabilidade de falha de 10%. O limite local de espera é de 500 ms.
 
+## Executar com Docker
+
+Com o Docker e o plugin Docker Compose disponíveis:
+
+```bash
+docker compose up --build -d --wait
+docker compose ps
+docker compose logs -f bilheteria
+```
+
+O serviço atende em `http://localhost:3000`. A verificação de saúde consulta `GET /eventos`. Use a porta 3000 com apenas uma instância: encerre o `npm start` antes de subir o contêiner.
+
+```bash
+# Executar os testes e verificar os tipos no contêiner
+docker compose exec bilheteria npm test
+docker compose exec bilheteria npm run typecheck
+
+# Reiniciar com todas as poltronas livres
+docker compose restart bilheteria
+
+# Encerrar e remover o contêiner
+docker compose down
+```
+
+Para usar somente o Dockerfile:
+
+```bash
+docker build -t bilheteria .
+docker run --rm -p 3000:3000 bilheteria
+```
+
+A imagem usa Node.js 22, instala as dependências com `npm ci` e executa `npm start` com o usuário `node`. As dependências de desenvolvimento são instaladas porque o comando de inicialização usa `tsx`.
+
 ## Usar a API
 
 Listar os eventos e a disponibilidade atual:
@@ -93,13 +126,15 @@ Em todas as execuções, o número de vendas permaneceu dentro da capacidade e c
 
 Para repetir, execute `npm start` em um terminal e o benchmark em outro. Encerre e reinicie o servidor entre as medições.
 
+Com o Compose, reinicie com `docker compose restart bilheteria` e execute `docker compose exec bilheteria npm run bench`. Aguarde o serviço voltar a responder antes de cada execução.
+
 ## Integrantes e contribuições
 
 | Integrante | Usuário GitHub | Contribuição |
 | --- | --- | --- |
 | Ester Marreiro da Rocha | [EsterMarreiro](https://github.com/EsterMarreiro) | Importação da base; regra de meia-entrada; cálculo dos preços e da taxa de serviço; classes de erros e controle de poltronas. |
-| José Nichollas Leandro Ribeiro | [jnicklr](https://github.com/jnicklr) | Compra e emissão de comprovantes; contrato da bilheteria; recuperação após falha no pagamento; tempo limite; configuração dos eventos e do servidor; documentação. |
+| José Nichollas Leandro Ribeiro | [jnicklr](https://github.com/jnicklr) | Compra e emissão de comprovantes; contrato da bilheteria; recuperação após falha no pagamento; tempo limite; configuração dos eventos e do servidor; Dockerfile, Compose e documentação. |
 
 ## Vídeo
 
-Link do vídeo: **a adicionar**.
+[Assistir à apresentação](https://drive.google.com/file/d/1ETsNp8_th6tJI-AUEMlF-kAv89VYBsIR/view?usp=sharing).
